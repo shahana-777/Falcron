@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-beige: #F5F2EB;
+    --card-surface: #FFFFFF;
+    --border-beige: #E5DFD5;
+    --accent-red: #E31B23;
+    --accent-blue: #1E3A8A;
+    --text-primary: #18181B;
+    --text-muted: #57534E;
+  }
+
+  body {
+    background-color: #F5F2EB;
+    color: #18181B;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+.font-orbitron {
+  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', 'Orbitron', sans-serif;
+}
+
+.font-space {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Elegant light grid & subtle circuit motif on beige */
+.bg-circuit-grid {
+  background-color: #F5F2EB;
+  background-image: 
+    radial-gradient(circle at 50% 28%, rgba(227, 27, 35, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(30, 58, 138, 0.06) 0%, transparent 50%),
+    linear-gradient(to right, rgba(217, 209, 196, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 209, 196, 0.45) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+}
+
+.bg-dot-matrix {
+  background-image: radial-gradient(rgba(120, 113, 108, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Custom scrollbar for beige theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F2EB;
+}
+::-webkit-scrollbar-thumb {
+  background: #D6CEC1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8ADA0;
+}
+
+/* Radar sweep keyframes */
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes radar-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes eye-blink {
+  0%, 45%, 55%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.08);
+  }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 2.8s linear infinite;
+}
+
+.animate-radar-pulse {
+  animation: radar-pulse 2.5s ease-in-out infinite;
+}
+
+.animate-eye-blink {
+  transform-origin: center;
+  animation: eye-blink 5s ease-in-out infinite;
+}

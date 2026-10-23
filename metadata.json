@@ -1,0 +1,6 @@
+{
+  "name": "FALCRON - AI-Powered IoT Security",
+  "description": "Real-time IoT sensor monitoring, AI malicious payload detection, and blockchain-verified incident ledger.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

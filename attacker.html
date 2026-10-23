@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚔️ FALCRON Attack Simulator — Labeeba's Console</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #e31b23;
+      --red-dark: #b91219;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --bg: #0f0f11;
+      --surface: #18181b;
+      --border: #27272a;
+      --text: #fafafa;
+      --muted: #71717a;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(227,27,35,0.12);
+      border: 1px solid rgba(227,27,35,0.35);
+      border-radius: 999px;
+      padding: 0.3rem 1rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--red);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+    .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.03em; }
+    h1 span { color: var(--red); }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    /* Server URL */
+    label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 0.4rem; font-weight: 600; }
+    input[type="text"], textarea, select {
+      width: 100%;
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      padding: 0.65rem 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--red); }
+    textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+    select option { background: #18181b; }
+
+    /* Presets */
+    .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.2rem; }
+    .preset-btn {
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.6rem 0.8rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .preset-btn:hover { border-color: var(--red); color: var(--text); }
+    .preset-btn.active { border-color: var(--red); background: rgba(227,27,35,0.08); color: var(--text); font-weight: 600; }
+    .preset-btn .tag { font-size: 0.62rem; padding: 0.15rem 0.4rem; border-radius: 4px; }
+    .tag-evil { background: rgba(227,27,35,0.2); color: #f87171; }
+    .tag-clean { background: rgba(16,185,129,0.15); color: var(--green); }
+
+    /* Launch Button */
+    .launch-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .launch-btn:hover { background: var(--red-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(227,27,35,0.4); }
+    .launch-btn:active { transform: translateY(0); }
+    .launch-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Result Panel */
+    .result-panel {
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      min-height: 80px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: 1.2rem;
+      color: var(--muted);
+      transition: border-color 0.3s;
+    }
+    .result-panel.blocked { border-color: var(--red); color: #fca5a5; }
+    .result-panel.accepted { border-color: var(--green); color: #6ee7b7; }
+
+    /* History */
+    .history-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; max-height: 240px; overflow-y: auto; }
+    .history-item {
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-item.blocked { border-left: 3px solid var(--red); }
+    .history-item.accepted { border-left: 3px solid var(--green); }
+    .verdict-tag { font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 5px; }
+    .verdict-blocked { background: rgba(227,27,35,0.2); color: #f87171; }
+    .verdict-clean { background: rgba(16,185,129,0.15); color: var(--green); }
+
+    .empty-msg { color: var(--muted); font-size: 0.8rem; text-align: center; padding: 1.5rem 0; font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">⚔️ Attack Console</div>
+    <h1>Labeeba's <span>Payload Launcher</span></h1>
+    <p class="subtitle">Send real attack payloads to FALCRON. Will it block you? 👀</p>
+  </div>
+
+  <!-- Config -->
+  <div class="card">
+    <div class="card-title">🎯 Target Server</div>
+    <label>FALCRON Server URL</label>
+    <input type="text" id="serverUrl" value="http://localhost:8000/attack" placeholder="http://192.168.x.x:8000/attack" />
+    <p style="color:var(--muted);font-size:0.72rem;margin-top:0.4rem;font-family:'JetBrains Mono',monospace;">
+      💡 If attacking from another device on WiFi, replace localhost with your friend's IP address
+    </p>
+  </div>
+
+  <!-- Payload Builder -->
+  <div class="card">
+    <div class="card-title">💣 Payload Builder</div>
+
+    <!-- Presets -->
+    <label style="margin-bottom:0.6rem;">Quick Attack Presets</label>
+    <div class="presets" id="presets">
+      <button class="preset-btn active" onclick="selectPreset(this, 'shellcode')" data-key="shellcode">
+        <span>MQTT Buffer Overflow</span>
+        <span class="tag tag-evil">💀 Evil</span>
+      </button>
+      <button class="preset-btn" onclick="selectPreset(this, 'sqli')" data-key="sqli">
+        <span>SQL Injection</span>
+        <span class="tag tag-evil">💀 Evil</span>
+      </button>
+      <button class="preset-btn" onclick="selectPreset(this, 'xss')" data-key="xss">
+        <span>XSS Script Inject</span>
+        <span class="tag tag-evil">💀 Evil</span>
+      </button>
+      <button class="preset-btn" onclick="selectPreset(this, 'thermal')" data-key="thermal">
+        <span>Thermal Spike Attack</span>
+        <span class="tag tag-evil">💀 Evil</span>
+      </button>
+      <button class="preset-btn" onclick="selectPreset(this, 'ircmd')" data-key="ircmd">
+        <span>IR Sensor Override</span>
+        <span class="tag tag-evil">💀 Evil</span>
+      </button>
+      <button class="preset-btn" onclick="selectPreset(this, 'clean')" data-key="clean">
+        <span>Normal Telemetry</span>
+        <span class="tag tag-clean">✅ Clean</span>
+      </button>
+    </div>
+
+    <!-- Custom payload textarea -->
+    <label>Raw Payload Buffer <span style="color:var(--muted)">(editable)</span></label>
+    <textarea id="payloadInput"></textarea>
+
+    <button class="launch-btn" id="launchBtn" onclick="launchAttack()" style="margin-top:1.2rem;">
+      ⚡ Launch Attack
+    </button>
+
+    <!-- Result -->
+    <div class="result-panel" id="resultPanel">Waiting for launch...</div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="card-title">📋 Attack History</div>
+    <ul class="history-list" id="historyList">
+      <li class="empty-msg">No attacks fired yet. Launch something! 🚀</li>
+    </ul>
+  </div>
+
+  <script>
+    const PRESETS = {
+      shellcode: `\\x90\\x90\\x90\\x90\\x31\\xc0\\x50\\x68\\x2f\\x2f\\x73\\x68\\x68\\x2f\\x62\\x69\\x6e\\x89\\xe3\\x50\\x53\\x89\\xe1\\xb0\\x0b\\xcd\\x80`,
+      sqli:      `' OR 1=1 -- ; DROP TABLE sensors; SELECT * FROM users WHERE '1'='1`,
+      xss:       `<script>alert('FALCRON_XSS_PWNED')<\/script><img src=x onerror=alert(1)>`,
+      thermal:   `{"temp": 98.4, "delta_rate": "+74.2C/s", "crc": "0xDEADBEEF", "cmd": "OVERWRITE_EEPROM_0x7F"}`,
+      ircmd:     `INTRUDER_OVERRIDE_PIN=13;VOLTAGE_PULSE=HIGH;SIG_MASK=0xFF`,
+      clean:     `{"temp": 23.45, "vcc": 3.31, "humidity": 45.2, "seq": 59124, "ack": true}`,
+    };
+
+    let activeKey = 'shellcode';
+    document.getElementById('payloadInput').value = PRESETS[activeKey];
+
+    function selectPreset(btn, key) {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeKey = key;
+      document.getElementById('payloadInput').value = PRESETS[key];
+    }
+
+    const history = [];
+
+    async function launchAttack() {
+      const url = document.getElementById('serverUrl').value.trim();
+      const payload = document.getElementById('payloadInput').value;
+      const btn = document.getElementById('launchBtn');
+      const panel = document.getElementById('resultPanel');
+
+      if (!url || !payload) { panel.textContent = '⚠ Please fill in server URL and payload.'; return; }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Transmitting...';
+      panel.className = 'result-panel';
+      panel.textContent = 'Sending payload to FALCRON server...';
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: payload,
+        });
+
+        const data = await res.json();
+        const ts = new Date().toLocaleTimeString();
+        const blocked = data.verdict === 'Malicious';
+
+        panel.className = 'result-panel ' + (blocked ? 'blocked' : 'accepted');
+        panel.textContent = [
+          `[${ts}] STATUS: ${data.status}`,
+          `VERDICT: ${data.verdict}`,
+          `REASON:  ${data.reason}`,
+          `SCORE:   ${data.anomalyScore}`,
+          `HASH:    ${data.hash?.slice(0, 20)}...`,
+          ``,
+          blocked
+            ? `⛔ FALCRON BLOCKED YOUR ATTACK — check the dashboard for the alert!`
+            : `✅ Payload accepted — it was clean!`,
+        ].join('\n');
+
+        // Add to history
+        history.unshift({ ts, verdict: data.verdict, reason: data.reason, payload: payload.slice(0, 40) });
+        renderHistory();
+
+      } catch (err) {
+        panel.className = 'result-panel';
+        panel.textContent = `❌ Could not reach server:\n${err.message}\n\nMake sure server.py is running on port 8000.`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⚡ Launch Attack';
+      }
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      if (history.length === 0) {
+        list.innerHTML = '<li class="empty-msg">No attacks fired yet.</li>';
+        return;
+      }
+      list.innerHTML = history.slice(0, 20).map(h => `
+        <li class="history-item ${h.verdict === 'Malicious' ? 'blocked' : 'accepted'}">
+          <span style="color:var(--muted)">[${h.ts}]</span>
+          <span style="flex:1;margin:0 0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.payload}...</span>
+          <span class="verdict-tag ${h.verdict === 'Malicious' ? 'verdict-blocked' : 'verdict-clean'}">
+            ${h.verdict === 'Malicious' ? '⛔ BLOCKED' : '✅ CLEAN'}
+          </span>
+        </li>`).join('');
+    }
+
+    // Allow Enter on URL field
+    document.getElementById('serverUrl').addEventListener('keydown', e => {
+      if (e.key === 'Enter') launchAttack();
+    });
+  </script>
+</body>
+</html>
