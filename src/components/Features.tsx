@@ -44,15 +44,6 @@ export const Features: React.FC = () => {
       iconBg: 'bg-blue-50 border-blue-200',
     },
     {
-      icon: Link2,
-      title: 'Blockchain-Verified Records',
-      description:
-        'Cryptographic hashes of every incident and payload are anchored to an EVM smart contract, eliminating log falsification and ensuring audit integrity.',
-      accent: 'hover:border-[#1E3A8A]/60 hover:shadow-md',
-      iconColor: 'text-[#1E3A8A]',
-      iconBg: 'bg-blue-50 border-blue-200',
-    },
-    {
       icon: HardDriveDownload,
       title: 'Device Status Tracking',
       description:

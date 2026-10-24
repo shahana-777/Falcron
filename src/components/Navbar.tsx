@@ -28,7 +28,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateToMonitor, activeSecti
     { name: 'Overview', href: '#overview' },
     { name: 'How It Works', href: '#how-it-works' },
     { name: 'Live Monitor', href: '#live-monitor' },
-    { name: 'Blockchain Proof', href: '#blockchain' },
     { name: 'Capabilities', href: '#security' },
   ];
 

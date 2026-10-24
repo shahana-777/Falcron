@@ -8,20 +8,16 @@ import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { HowItWorks } from './components/HowItWorks';
 import { LiveMonitor } from './components/LiveMonitor';
-import { BlockchainPanel } from './components/BlockchainPanel';
 import { Features } from './components/Features';
 import { Footer } from './components/Footer';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<string>('overview');
-  const [selectedHashForVerification, setSelectedHashForVerification] = useState<string>(
-    '0x8f2d65c401b876e93ca910fa3e56bc7492193b2a1a89c72e2d9b4f61c37b018e'
-  );
 
   // Scroll listener to update active section in navbar
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['overview', 'how-it-works', 'live-monitor', 'blockchain', 'security'];
+      const sections = ['overview', 'how-it-works', 'live-monitor', 'security'];
       const scrollPosition = window.scrollY + 200;
 
       for (const sectionId of sections) {
@@ -68,14 +64,7 @@ export default function App() {
         <HowItWorks />
 
         {/* Live Monitor (Device Cards + Threat Feed) */}
-        <LiveMonitor
-          onSelectHashForVerification={(hash) => {
-            setSelectedHashForVerification(hash);
-          }}
-        />
-
-        {/* Blockchain Verification Panel */}
-        <BlockchainPanel selectedHash={selectedHashForVerification} />
+        <LiveMonitor />
 
         {/* Security Capabilities Grid (6 cards) */}
         <Features />

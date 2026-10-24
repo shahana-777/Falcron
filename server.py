@@ -27,11 +27,11 @@ if sys.platform == 'win32':
 
 from datetime import datetime
 from typing import List, Optional
-from urllib.request import urlopen
+from urllib.request import urlopen, Request as UrlRequest
 from urllib.error import URLError
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request as FastApiRequest
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 
@@ -48,9 +48,38 @@ app.add_middleware(
 )
 
 # ─────────────────────────────────────────────
-#  Firebase Config
+#  Firebase Config & MQTT Hardware Alert
 # ─────────────────────────────────────────────
 FIREBASE_URL = "https://falcron-a761f-default-rtdb.asia-southeast1.firebasedatabase.app"
+
+# Optional MQTT Publisher for physical broker
+try:
+    import paho.mqtt.client as mqtt_client
+    HAS_PAHO = True
+except ImportError:
+    HAS_PAHO = False
+
+def publish_mqtt_alert(is_alert: bool):
+    """Publish alert state directly to Mosquitto MQTT broker on localhost:1883."""
+    if not HAS_PAHO:
+        return
+    try:
+        client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, "FALCRON_Backend_Alert")
+        # Try connecting with or without auth
+        try:
+            client.username_pw_set("falcron_monitor", "monitor123")
+        except:
+            pass
+        client.connect("localhost", 1883, 3)
+        msg = "1" if is_alert else "0"
+        client.publish("falcron/alert", msg)
+        client.publish("falcron/sensors/led", msg)
+        client.publish("sensors/alert", msg)
+        client.disconnect()
+        print(f"[MQTT] Published hardware alert flag ({msg}) to Mosquitto broker!")
+    except Exception as e:
+        # Broker might be offline or running unauthenticated
+        pass
 
 def fetch_firebase_data():
     """Fetch real sensor data from Rameeza's Firebase Realtime Database."""
@@ -61,6 +90,36 @@ def fetch_firebase_data():
     except Exception as e:
         print(f"[FIREBASE] Error fetching data: {e}")
         return None
+
+def update_firebase_alert(is_alert: bool):
+    """Write alert signal to Firebase so friend's hardware LED lights up."""
+    try:
+        val_bool = is_alert
+        val_int = 1 if is_alert else 0
+        
+        # 1. Update /securityAlert.json
+        payload = json.dumps({
+            "alert": val_bool,
+            "attackDetected": val_bool,
+            "redLed": val_bool,
+            "led": val_int
+        }).encode('utf-8')
+        req = UrlRequest(f"{FIREBASE_URL}/securityAlert.json", data=payload, method="PUT", headers={"Content-Type": "application/json"})
+        urlopen(req, timeout=5)
+
+        # 2. Update /sensor/gasAlert.json or /sensor/attackAlert.json
+        # Many ESP8266 codes listen directly to sensor/gasAlert to trigger the buzzer/red LED!
+        req2 = UrlRequest(f"{FIREBASE_URL}/sensor/gasAlert.json", data=json.dumps(val_bool).encode('utf-8'), method="PUT", headers={"Content-Type": "application/json"})
+        urlopen(req2, timeout=5)
+
+        # 3. Direct red led keys
+        for key in ["redLed", "led", "alert", "attack"]:
+            req_key = UrlRequest(f"{FIREBASE_URL}/{key}.json", data=json.dumps(val_int).encode('utf-8'), method="PUT", headers={"Content-Type": "application/json"})
+            urlopen(req_key, timeout=5)
+
+        print(f"[FIREBASE] Sent hardware RED LED trigger to Firebase: {is_alert}")
+    except Exception as e:
+        print(f"[FIREBASE] Error sending alert signal: {e}")
 
 # ─────────────────────────────────────────────
 #  In-Memory State
@@ -334,7 +393,7 @@ async def get_firebase():
 
 
 @app.post("/attack")
-async def receive_attack(request: Request):
+async def receive_attack(request: FastApiRequest):
     """
     Main endpoint - Labeeba sends her payload here.
     FALCRON inspects it, logs the result, and broadcasts to frontend.
@@ -395,13 +454,21 @@ async def receive_attack(request: Request):
                 d["status"] = "alert"
         await broadcast({"type": "devices_update", "devices": DEVICES})
 
-        # Reset device status after 12 seconds
+        # Trigger hardware red LED in Firebase AND local Mosquitto MQTT!
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, update_firebase_alert, True)
+        await loop.run_in_executor(None, publish_mqtt_alert, True)
+
+        # Reset device status and turn off LED after 12 seconds
         async def reset_device():
             await asyncio.sleep(12)
             for d in DEVICES:
                 if d["id"] == target_device["id"]:
                     d["status"] = "normal"
             await broadcast({"type": "devices_update", "devices": DEVICES})
+            # Turn off hardware LED
+            await loop.run_in_executor(None, update_firebase_alert, False)
+            await loop.run_in_executor(None, publish_mqtt_alert, False)
 
         asyncio.create_task(reset_device())
 

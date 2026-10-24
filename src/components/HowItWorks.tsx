@@ -42,23 +42,13 @@ export const HowItWorks: React.FC = () => {
     },
     {
       num: '04',
-      title: 'Instant Flagging',
-      subtitle: 'Live Incident Dispatch',
-      desc: 'Suspicious payloads are flagged in milliseconds on the FALCRON command console, triggering automated quarantine rules and alerting security engineers.',
+      title: 'Instant Flagging & Defense',
+      subtitle: 'Live Incident Dispatch & Quarantine',
+      desc: 'Suspicious payloads are flagged in milliseconds on the FALCRON console, triggering automated node quarantine and edge hardware alarms.',
       icon: AlertTriangle,
       accent: 'border-[#E31B23] text-[#E31B23]',
       detail: 'Alerting: Push notifications over WebSockets stream to the Threat Feed with exact packet snippets, anomaly scores, and immediate node isolation triggers.',
       tag: 'Instant Triaging',
-    },
-    {
-      num: '05',
-      title: 'Blockchain Proof',
-      subtitle: 'Tamper-Evident Incident Ledger',
-      desc: 'Verified security incidents are cryptographically hashed and anchored into an on-chain smart contract, guaranteeing non-repudiation for audits.',
-      icon: ShieldCheck,
-      accent: 'border-[#1E3A8A] text-[#1E3A8A]',
-      detail: 'Ledger: SHA-256 digest of payload + timestamp + node signature committed to the immutable blockchain contract. Any posthumous tampering immediately yields a hash mismatch.',
-      tag: 'Zero-Trust Audit',
     },
   ];
 
@@ -73,7 +63,7 @@ export const HowItWorks: React.FC = () => {
           How FALCRON Protects Every Sensor
         </h2>
         <p className="text-base sm:text-lg text-[#57534E] max-w-2xl text-balance">
-          From edge silicon to immutable blockchain verification — an unbroken chain of custody for IoT telemetry.
+          From edge silicon to AI inspection — an unbroken chain of security for IoT telemetry.
         </p>
       </div>
 
@@ -82,7 +72,7 @@ export const HowItWorks: React.FC = () => {
         {/* Continuous Connecting Line (Desktop) */}
         <div className="hidden lg:block absolute top-[52px] left-[5%] right-[5%] h-[2px] bg-gradient-to-r from-[#E31B23] via-[#1E3A8A] to-[#E31B23] opacity-30 z-0" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const isSelected = activeStep === idx;

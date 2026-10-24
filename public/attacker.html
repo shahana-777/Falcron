@@ -302,8 +302,8 @@
         </button>
       </div>
       <div class="custom-ip-row">
-        <label>Rameeza / Custom IP:</label>
-        <input type="text" id="customIpInput" placeholder="e.g. 192.168.1.150" oninput="onIpInput()" />
+        <label>Target IP / Tunnel URL:</label>
+        <input type="text" id="customIpInput" placeholder="e.g. https://spotty-rivers-rest.loca.lt" oninput="onIpInput()" />
       </div>
       <div class="target-status checking" id="targetStatus">Select a target above</div>
     </div>
@@ -370,81 +370,112 @@
   <script>
     // ===== Target Management =====
     const targets = {
-      shaha:   { ip: '192.168.1.120', port: 8000, name: 'SHAHA' },
-      rameeza: { ip: '',              port: 8000, name: 'RAMEEZA' },
-      custom:  { ip: '',              port: 8000, name: 'OTHER' }
+      shaha:   { ip: '192.168.1.120', port: 8000, name: 'SHAHA', fullUrl: null },
+      rameeza: { ip: '',              port: 8000, name: 'RAMEEZA', fullUrl: null },
+      custom:  { ip: '',              port: 8000, name: 'OTHER', fullUrl: null }
     };
 
     let activeTarget = 'shaha';
 
     function selectTarget(name) {
       activeTarget = name;
-      // Update button styles
       document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('btn-' + name).classList.add('active');
+      const activeBtn = document.getElementById('btn-' + name);
+      if (activeBtn) activeBtn.classList.add('active');
 
-      // If rameeza or custom, focus the IP input
       if (name === 'rameeza' || name === 'custom') {
-        document.getElementById('customIpInput').focus();
-        const ip = document.getElementById('customIpInput').value.trim();
-        if (ip) {
-          targets[name].ip = ip;
+        const inputEl = document.getElementById('customIpInput');
+        inputEl.focus();
+        if (inputEl.value.trim()) {
+          onIpInput();
+          return;
         }
       }
-
       updateStatus();
     }
 
     function onIpInput() {
-      const ip = document.getElementById('customIpInput').value.trim();
-      if (activeTarget === 'rameeza') {
-        targets.rameeza.ip = ip;
-        document.getElementById('rameeza-ip-label').textContent = ip ? ip + ':8000' : 'Enter IP below';
-      } else if (activeTarget === 'custom') {
-        targets.custom.ip = ip;
+      const inputEl = document.getElementById('customIpInput');
+      const rawVal = inputEl ? inputEl.value.trim() : '';
+
+      if (!rawVal) {
+        targets[activeTarget].fullUrl = null;
+        targets[activeTarget].ip = '';
+        updateStatus();
+        return;
       }
-      // Also handle if user typed ip:port
-      if (ip.includes(':')) {
-        const parts = ip.split(':');
-        targets[activeTarget].ip = parts[0];
-        targets[activeTarget].port = parseInt(parts[1]) || 8000;
+
+      // If full URL (http:// or https://)
+      if (rawVal.startsWith('http://') || rawVal.startsWith('https://')) {
+        const clean = rawVal.replace(/\/+$/, '');
+        targets[activeTarget].fullUrl = clean;
+        targets[activeTarget].ip = clean;
+      } else {
+        targets[activeTarget].fullUrl = null;
+        if (rawVal.includes(':')) {
+          const parts = rawVal.split(':');
+          targets[activeTarget].ip = parts[0];
+          targets[activeTarget].port = parseInt(parts[1]) || 8000;
+        } else {
+          targets[activeTarget].ip = rawVal;
+          targets[activeTarget].port = 8000;
+        }
+      }
+
+      if (activeTarget === 'rameeza') {
+        const labelText = rawVal.length > 20 ? rawVal.substring(0, 18) + '...' : rawVal;
+        document.getElementById('rameeza-ip-label').textContent = labelText;
       }
       updateStatus();
     }
 
     function getServerUrl() {
       const t = targets[activeTarget];
+      if (!t) return null;
+      if (t.fullUrl) return t.fullUrl;
       if (!t.ip) return null;
       return `http://${t.ip}:${t.port}`;
     }
 
+    let statusCheckTimer = null;
     function updateStatus() {
+      if (statusCheckTimer) clearTimeout(statusCheckTimer);
+      statusCheckTimer = setTimeout(doStatusCheck, 250);
+    }
+
+    function doStatusCheck() {
       const statusEl = document.getElementById('targetStatus');
       const url = getServerUrl();
 
       if (!url) {
         statusEl.className = 'target-status checking';
-        statusEl.textContent = 'Enter an IP address to target';
+        statusEl.textContent = 'Enter an IP or URL to target';
         return;
       }
 
       statusEl.className = 'target-status checking';
       statusEl.textContent = `Checking ${url} ...`;
 
-      fetch(url + '/', { method: 'GET', signal: AbortSignal.timeout(3000) })
+      fetch(url + '/', {
+        method: 'GET',
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true'
+        },
+        signal: AbortSignal.timeout(4000)
+      })
         .then(res => res.json())
         .then(data => {
           if (data.status === 'online') {
             statusEl.className = 'target-status online';
-            statusEl.textContent = `ONLINE - ${targets[activeTarget].name}'s server is reachable at ${url}`;
+            statusEl.textContent = `ONLINE - ${targets[activeTarget].name} server reachable at ${url}`;
           } else {
             statusEl.className = 'target-status online';
             statusEl.textContent = `CONNECTED to ${url}`;
           }
         })
-        .catch(() => {
+        .catch(err => {
           statusEl.className = 'target-status offline';
-          statusEl.textContent = `OFFLINE - Cannot reach ${url}. Is the server running?`;
+          statusEl.textContent = `OFFLINE - Cannot reach ${url}. (Make sure tunnel or server is running)`;
         });
     }
 
@@ -510,7 +541,10 @@
       try {
         const res = await fetch(`${serverUrl}/attack`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Bypass-Tunnel-Reminder': 'true'
+          },
           body: JSON.stringify({
             payload: payload,
             target_device: device,
@@ -518,7 +552,13 @@
           })
         });
 
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch(e) {
+          data = { message: text.substring(0, 200) };
+        }
         addLog(data, res.status, targets[activeTarget].name);
       } catch (err) {
         addLog({
@@ -564,7 +604,7 @@
         entry.className = 'log-entry error';
         entry.innerHTML = `
           <div class="time">${timeStr} ${tag}</div>
-          <div class="verdict" style="color:#ffaa00;">ERROR</div>
+          <div class="verdict" style="color:#ffaa00;">ERROR (Status ${httpStatus})</div>
           <div class="detail">${data.message || 'Unknown error'}</div>
         `;
       }

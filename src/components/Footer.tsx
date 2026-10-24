@@ -39,9 +39,6 @@ export const Footer: React.FC = () => {
           <a href="#live-monitor" className="hover:text-[#18181B] transition-colors">
             Live Monitor
           </a>
-          <a href="#blockchain" className="hover:text-[#18181B] transition-colors">
-            Blockchain Proof
-          </a>
           <a href="#security" className="hover:text-[#18181B] transition-colors">
             Capabilities
           </a>

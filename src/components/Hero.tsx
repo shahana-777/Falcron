@@ -113,8 +113,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreData, onExploreHowItWorks }
             delay: shouldReduceMotion ? 0 : taglineStartDelay + 0.6,
           }}
         >
-          Real-time IoT monitoring, AI threat detection, and blockchain-verified
-          security — in one system.
+          Real-time IoT monitoring, AI threat detection, and automated edge defense — in one system.
         </motion.p>
 
         {/* Two CTAs */}
@@ -189,12 +188,12 @@ export const Hero: React.FC<HeroProps> = ({ onExploreData, onExploreHowItWorks }
           <div className="p-3.5 rounded-xl bg-white border border-[#E5DFD5] shadow-xs">
             <div className="flex items-center gap-2 text-xs text-[#57534E] mb-1">
               <Database className="w-3.5 h-3.5 text-amber-600" />
-              <span className="font-medium">Audit Ledger</span>
+              <span className="font-medium">Incident Forensics</span>
             </div>
             <div className="text-lg font-bold font-mono text-[#18181B] tabular-nums">
-              EVM Rollup
+              SHA-256 Digest
             </div>
-            <div className="text-[11px] text-[#78716C]">Tamper-evident hashes</div>
+            <div className="text-[11px] text-[#78716C]">Tamper-evident logs</div>
           </div>
         </motion.div>
       </div>

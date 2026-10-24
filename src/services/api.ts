@@ -44,22 +44,9 @@ export interface ThreatAlert {
   anomalyScore?: number;
 }
 
-export interface VerificationResult {
-  verified: boolean;
-  incidentHash: string;
-  blockNumber: number;
-  chainTx: string;
-  timestamp: string;
-  contractAddress: string;
-  merkleRoot: string;
-  ledgerNetwork: string;
-  tampered?: boolean;
-}
-
 // Configurable endpoints (override with environment variables if deployed)
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/live';
-export const BLOCKCHAIN_ADDRESS = '0x4F3A89e93cD2B7420c8C0A91D352B418E06A9b2c';
 
 // Initial devices baseline
 const INITIAL_DEVICES: Device[] = [
@@ -239,36 +226,6 @@ export async function getAlerts(): Promise<ThreatAlert[]> {
     // Backend offline / fallback
   }
   return [...currentAlerts];
-}
-
-/**
- * Verify an incident hash against the blockchain registry
- */
-export async function verifyOnChain(hash: string, forceMismatch = false): Promise<VerificationResult> {
-  try {
-    const res = await fetch(`${API_URL}/api/verify/${encodeURIComponent(hash)}`);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch {
-    // Fallback on-chain simulation
-  }
-
-  // Cryptographic deterministic check for simulation
-  const isKnownAlert = currentAlerts.some(a => a.hash.toLowerCase() === hash.toLowerCase());
-  const isVerified = isKnownAlert && !forceMismatch;
-
-  return {
-    verified: isVerified,
-    incidentHash: hash,
-    blockNumber: 19842103,
-    chainTx: `0x9e73${hash.slice(2, 10)}b8104c8f${hash.slice(-8)}`,
-    timestamp: new Date().toISOString(),
-    contractAddress: BLOCKCHAIN_ADDRESS,
-    merkleRoot: '0xd489a038bf9321c88e7b99a01f4c78e932144ba90ef9921cba77413009e88912',
-    ledgerNetwork: 'Arbitrum One (L2 Security Rollup)',
-    tampered: forceMismatch,
-  };
 }
 
 /**

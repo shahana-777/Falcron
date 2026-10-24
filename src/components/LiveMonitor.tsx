@@ -428,20 +428,12 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({
 
                       {/* Blockchain Hash + Verification Link */}
                       <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            if (onSelectHashForVerification) {
-                              onSelectHashForVerification(alert.hash);
-                            }
-                            const el = document.getElementById('blockchain');
-                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="inline-flex items-center gap-1 font-mono text-[11px] text-[#1E3A8A] hover:text-[#2563EB] font-semibold hover:underline cursor-pointer"
-                          title="Verify this incident on-chain"
+                        <span
+                          className="font-mono text-[11px] text-[#57534E]"
+                          title={alert.hash}
                         >
-                          <span>{alert.hash.slice(0, 8)}...{alert.hash.slice(-6)}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
+                          {alert.hash.slice(0, 8)}...{alert.hash.slice(-6)}
+                        </span>
                       </td>
                     </tr>
                   );
