@@ -1,0 +1,33 @@
+# ============================================================
+#  FALCRON MQTT Access Control List (ACL)
+# ============================================================
+#  Controls WHO can read/write to WHICH topics.
+#  Unauthorized access = BLOCKED at broker level.
+# ============================================================
+
+# ---- Monitor (Python backend) ----
+# Can READ all falcron topics (subscribe to everything)
+user falcron_monitor
+topic read falcron/#
+
+# ---- Sensor Devices (DHT11, IR, ESP) ----
+# Can ONLY publish sensor data — nothing else
+user falcron_sensor
+topic write falcron/sensors/temperature
+topic write falcron/sensors/humidity
+topic write falcron/sensors/ir
+topic write falcron/sensors/heartbeat
+
+# ---- Admin ----
+# Full read/write access to everything
+user falcron_admin
+topic readwrite falcron/#
+
+# ---- Test Attacker (Labeeba) ----
+# Can ONLY publish to the test topic
+user falcron_tester
+topic write falcron/test/attack
+topic read  falcron/test/result
+
+# ---- Default: deny everything not listed above ----
+# (Mosquitto denies by default when ACL file is present)
